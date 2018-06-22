@@ -1,6 +1,7 @@
 import express from "express";
+import jwt from "jsonwebtoken";
 import User from "../models/User";
-import { sendResetPassword } from "../mailer";
+import { sendResetPasswordEmail } from "../mailer";
 
 const router = express.Router();
 
@@ -40,7 +41,7 @@ router.post("/reset_password_request", (req, res) => {
   User.findOneAndUpdate({ email: req.body.email }).then(user => {
     if (user) {
       console.log("mevida");
-      sendResetPassword(user);
+      sendResetPasswordEmail(user);
       res.json({});
     } else {
       res
@@ -49,5 +50,32 @@ router.post("/reset_password_request", (req, res) => {
     }
   });
 });
+router.post("/validate_token", (req, res) => {
+  const token = req.body.token;
+  jwt.verify(token, process.env.JWT_SECRET, err => {
+    if (err) {
+      res.status(401).json({});
+    } else {
+      res.json({});
+    }
+  });
+});
 
+router.post("/reset_password", (req, res) => {
+  const { password, token } = req.body.data;
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      res.status(401).json({ errors: { global: "Invalid Token" } });
+    } else {
+      User.findOne({ _id: decoded._id }).then(user => {
+        if (user) {
+          user.setPassword(password);
+          user.save().then(() => res.json());
+        } else {
+          res.status(404).json({ errors: { global: "Invalid token" } });
+        }
+      });
+    }
+  });
+});
 export default router;
