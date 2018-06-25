@@ -9,9 +9,9 @@ router.use(authenticate);
 router.get("/search", (req, res) => {
   request
     .get(
-      `https://www.goodreads.com/search/index.xml?key=UQKdpYp5qK9OtHLNEypgUw&q=Ender%27s+Game&q=${
-        req.query.q
-      }`
+      `https://www.goodreads.com/search/index.xml?key=${
+        process.env.GOODREADS_KEY
+      }&${req.query.q}`
     )
     .then(result =>
       parseString(result, (err, goodreadsResult) => {
@@ -24,6 +24,23 @@ router.get("/search", (req, res) => {
               covers: [work.best_book[0].image_url[0]]
             })
           )
+        });
+      })
+    );
+});
+
+router.get("/fetchPages", (req, res) => {
+  const goodreadsId = req.query.goodreadsId;
+  request
+    .get(
+      `https://www.goodreads.com/book/show.xml?key=${
+        process.env.GOODREADS_KEY
+      }&id=${goodreadsId}`
+    )
+    .then(result =>
+      parseString(result, (err, goodreadsResult) => {
+        res.json({
+          pages: goodreadsResult.GoodreadsResponse.book[0].num_pages[0]
         });
       })
     );
