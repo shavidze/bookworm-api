@@ -18,7 +18,6 @@ router.post("/", (req, res) => {
 
 router.post("/confirmation", (req, res) => {
   const token = req.body.token;
-  console.log("ager a", token);
   User.findOneAndUpdate(
     {
       confirmationToken: token
@@ -37,10 +36,10 @@ router.post("/confirmation", (req, res) => {
 });
 
 router.post("/reset_password_request", (req, res) => {
-  console.log("HTTP -movida", req);
+  // console.log("HTTP -movida", req);
   User.findOneAndUpdate({ email: req.body.email }).then(user => {
     if (user) {
-      console.log("mevida");
+      // console.log("mevida");
       sendResetPasswordEmail(user);
       res.json({});
     } else {
