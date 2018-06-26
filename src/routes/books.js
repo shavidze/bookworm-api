@@ -2,9 +2,21 @@ import express from "express";
 import request from "request-promise";
 import { parseString } from "xml2js";
 import authenticate from "../middlewares/authenticate";
+import Book from "../models/Book";
+import parseErrors from "../utils/parseErrors";
 
 const router = express.Router();
 router.use(authenticate);
+
+router.get("/", (req, res) => {
+  Book.find({ userId: req.currentUser._id }).then(books => res.json({ books }));
+});
+
+router.post("/", (req, res) => {
+  Book.create({ ...req.body.book, userId: req.currentUser._id })
+    .then(book => res.json({ book }))
+    .catch(err => res.status(400).json({ errors: parseErrors(err.errors) }));
+});
 
 router.get("/search", (req, res) => {
   request
@@ -39,8 +51,10 @@ router.get("/fetchPages", (req, res) => {
     )
     .then(result =>
       parseString(result, (err, goodreadsResult) => {
+        const numPages = goodreadsResult.GoodreadsResponse.book[0].num_pages[0];
+        const pages = numPages ? parseInt(numPages, 10) : 0;
         res.json({
-          pages: goodreadsResult.GoodreadsResponse.book[0].num_pages[0]
+          pages
         });
       })
     );
